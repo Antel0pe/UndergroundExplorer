@@ -3,8 +3,22 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 
-export default function ThreeScene({ time, xRayEnabled }: { time: number, xRayEnabled: boolean }) {
+// values are in [-0.5..0.5, size, density 0..1, confidence 0..1]
+const ORES: Array<[number, number, number, number, number, number]> = [
+  [ 0.3,   0.43,  0.10, 0.10, 0.3, 0.8 ],
+  [ -0.20,-0.20,  0.09, 0.13, 0.7, 0.1 ],
+  [ -0.33, 0.38,  0.23, 0.05, 0.4, 0.5 ],
+  [ 0.2,   0.21,  0.40, 0.12, 0.9, 0.4 ],
+  [ 0.11, -0.27, -0.20, 0.09, 0.2, 0.8 ],
+];
 
+
+export default function ThreeScene({
+  time,
+  xRayEnabled,
+  density,
+  confidence,
+}: { time: number; xRayEnabled: boolean; density: number; confidence: number }) {
   const mountRef = useRef<HTMLDivElement>(null);
   const slicesRef = useRef<THREE.Mesh[]>([]);
   const hiCubesRef = useRef<THREE.Mesh[]>([]);
@@ -89,35 +103,42 @@ scene.add(mesh);
 
 }
 let oresOfInterest: number[][] = [
-  [ 0.3,  0.43,   0.10, 0.1 ],
-  [ -0.20,  -0.2,  0.09, 0.13 ],
-  [ -0.33,   0.38,    0.23, 0.05 ],
-  [ 0.2,  0.21,   0.40, 0.12 ],
-  [  0.11, -0.27, -0.20, 0.09 ]
+  [ 0.3,  0.43,   0.10, 0.1, 0.3, 0.8],
+  [ -0.20,  -0.2,  0.09, 0.13, 0.7, 0.1 ],
+  [ -0.33,   0.38,    0.23, 0.05, 0.4, 0.5 ],
+  [ 0.2,  0.21,   0.40, 0.12, 0.9, 0.4 ],
+  [  0.11, -0.27, -0.20, 0.09, 0.2, 0.8 ]
 ];
+hiCubesRef.current = []; // reset any previous refs (defensive)
 
-for (let j = 0; j < 5; j++) {
-    // === ADD: highlight cube inside the big cube ===
-    const hiSize = oresOfInterest[j][3];
-    const hiGeo = new THREE.BoxGeometry(hiSize, hiSize, hiSize);
+for (let j = 0; j < ORES.length; j++) {
+  const [x, y, z, size, dens, conf] = ORES[j];
 
-    // random position inside [-0.45, 0.45] so it stays well within the big cube
-    const rand = () => (Math.random() - 0.5) * 0.9;
-    const hiMesh = new THREE.Mesh(
-    hiGeo,
-    new THREE.MeshBasicMaterial({
-        color: 0xffff00,       // yellow
-        transparent: xRayEnabled,    // solid
-        depthTest: false,      // <- always draw on top so it's visible from anywhere
-        depthWrite: false,
-    })
-    );
-    hiMesh.position.set(oresOfInterest[j][0], oresOfInterest[j][1], oresOfInterest[j][2]);
-    hiMesh.renderOrder = 9999; // extra insurance to render last
-    scene.add(hiMesh);
-    hiCubesRef.current.push(hiMesh);
+  const hiGeo = new THREE.BoxGeometry(size, size, size);
+  const hiMat = new THREE.MeshBasicMaterial({
+    color: 0xffff00,
+    transparent: xRayEnabled, // initial look
+    depthTest: false,
+    depthWrite: false,
+  });
 
+  const hiMesh = new THREE.Mesh(hiGeo, hiMat);
+  hiMesh.position.set(x, y, z);
+  hiMesh.renderOrder = 9999;
+
+  // stash metadata for fast threshold checks later
+  hiMesh.userData.density = dens;     // 0..1
+  hiMesh.userData.confidence = conf;  // 0..1
+
+  // initial visibility using current props (0..100 → 0..1)
+  const dThresh = density / 100;
+  const cThresh = confidence / 100;
+  hiMesh.visible = dens >= dThresh && conf >= cThresh;
+
+  scene.add(hiMesh);
+  hiCubesRef.current.push(hiMesh);
 }
+
 
 
     // Track which keys are pressed
@@ -212,15 +233,33 @@ hiCubesRef.current = [];
   }
 }, [time]);
 
+// useEffect(() => {
+//   for (const mesh of hiCubesRef.current) {
+//     const mat = mesh.material as THREE.MeshBasicMaterial;
+
+//     mat.transparent = xRayEnabled;
+
+//     mat.needsUpdate = true;
+//   }
+// }, [xRayEnabled]);
+
 useEffect(() => {
+  const dThresh = density / 100;
+  const cThresh = confidence / 100;
+
   for (const mesh of hiCubesRef.current) {
+    // visibility by thresholds
+    const dens = mesh.userData.density as number;     // 0..1
+    const conf = mesh.userData.confidence as number;  // 0..1
+    mesh.visible = dens >= dThresh && conf >= cThresh;
+
+    // match the X-Ray / Underground look
     const mat = mesh.material as THREE.MeshBasicMaterial;
-
     mat.transparent = xRayEnabled;
-
     mat.needsUpdate = true;
   }
-}, [xRayEnabled]);
+}, [density, confidence, xRayEnabled]);
+
 
 
   return <div ref={mountRef} style={{ width: "100%", height: "100%" }} />;

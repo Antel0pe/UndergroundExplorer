@@ -8,6 +8,15 @@ export default function Home() {
   const [sceneIds, setSceneIds] = useState<number[]>([0]); // start with one
   // add below: const [sceneIds, setSceneIds] = useState<number[]>([0]);
 const [xRayEnabled, setXRayEnabled] = useState(true);
+const [density, setDensity] = useState(0);
+const [confidence, setConfidence] = useState(0);
+
+// simple clamp
+const clamp01 = (v: number) => Math.max(0, Math.min(100, Math.round(v)));
+
+// handlers Sidebar will call
+const handleDensity = (v: number) => setDensity(clamp01(v));
+const handleConfidence = (v: number) => setConfidence(clamp01(v));
 const toggleXRay = () => setXRayEnabled(v => !v);
 
 
@@ -30,15 +39,29 @@ const toggleXRay = () => setXRayEnabled(v => !v);
       >
 {/* pass xRayEnabled to each SceneCard */}
 {sceneIds.map((id) => (
-  <SceneCard key={id} xRayEnabled={xRayEnabled} />
+  <SceneCard
+    key={id}
+    xRayEnabled={xRayEnabled}
+    density={density}
+    confidence={confidence}
+  />
 ))}
+
 
       </div>
 
       {/* Sidebar (15%) */}
       <div style={{ flex: "0 0 15%", background: "#f0f0f0" }}>
         {/* pass toggle + current state to Sidebar */}
-<Sidebar onAddScene={addScene} xRayEnabled={xRayEnabled} onToggleXRay={toggleXRay} />
+<Sidebar
+  onAddScene={addScene}
+  xRayEnabled={xRayEnabled}
+  onToggleXRay={toggleXRay}
+  density={density}
+  confidence={confidence}
+  onChangeDensity={handleDensity}
+  onChangeConfidence={handleConfidence}
+/>
 
       </div>
     </div>

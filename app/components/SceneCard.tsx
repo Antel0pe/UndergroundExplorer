@@ -4,7 +4,11 @@ import { useState } from "react";
 import ThreeScene from "./ThreeScene";
 import TimeSlider from "./TimeSlider";
 
-export default function SceneCard({ xRayEnabled }: { xRayEnabled: boolean }) {
+export default function SceneCard({
+  xRayEnabled,
+  density,
+  confidence,
+}: { xRayEnabled: boolean; density: number; confidence: number }) {
   const [time, setTime] = useState(0);
 
   return (
@@ -21,7 +25,7 @@ export default function SceneCard({ xRayEnabled }: { xRayEnabled: boolean }) {
     >
       {/* Canvas region fills available vertical space */}
       <div style={{ flex: 1, minHeight: 240, position: "relative" }}>
-        <ThreeScene time={time} xRayEnabled={xRayEnabled} />
+        <ThreeScene time={time} xRayEnabled={xRayEnabled} density={density} confidence={confidence} />
       </div>
 
       {/* Local slider */}
