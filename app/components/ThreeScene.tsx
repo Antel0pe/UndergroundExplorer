@@ -3,10 +3,12 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 
-export default function ThreeScene({ time }: { time: number }) {
+export default function ThreeScene({ time, xRayEnabled }: { time: number, xRayEnabled: boolean }) {
 
   const mountRef = useRef<HTMLDivElement>(null);
   const slicesRef = useRef<THREE.Mesh[]>([]);
+  const hiCubesRef = useRef<THREE.Mesh[]>([]);
+
 
   useEffect(() => {
     if (!mountRef.current) return;
@@ -15,6 +17,8 @@ export default function ThreeScene({ time }: { time: number }) {
       mountRef.current.removeChild(mountRef.current.firstChild);
     }
 
+    hiCubesRef.current = []; // reset on (re)build
+
     // Scene
     const scene = new THREE.Scene();
 
@@ -22,9 +26,9 @@ export default function ThreeScene({ time }: { time: number }) {
     const camera = new THREE.PerspectiveCamera(
       75, 
       mountRef.current.clientWidth / mountRef.current.clientHeight, 
-      0.1, 
-      1000
-    );
+  0.1,
+  1000
+);
     camera.position.z = 3;
 
     // Renderer
@@ -84,9 +88,17 @@ slicesRef.current.push(mesh);
 scene.add(mesh);
 
 }
+let oresOfInterest: number[][] = [
+  [ 0.3,  0.43,   0.10, 0.1 ],
+  [ -0.20,  -0.2,  0.09, 0.13 ],
+  [ -0.33,   0.38,    0.23, 0.05 ],
+  [ 0.2,  0.21,   0.40, 0.12 ],
+  [  0.11, -0.27, -0.20, 0.09 ]
+];
+
 for (let j = 0; j < 5; j++) {
     // === ADD: highlight cube inside the big cube ===
-    const hiSize = 0.1; // small cube
+    const hiSize = oresOfInterest[j][3];
     const hiGeo = new THREE.BoxGeometry(hiSize, hiSize, hiSize);
 
     // random position inside [-0.45, 0.45] so it stays well within the big cube
@@ -95,14 +107,16 @@ for (let j = 0; j < 5; j++) {
     hiGeo,
     new THREE.MeshBasicMaterial({
         color: 0xffff00,       // yellow
-        transparent: true,    // solid
+        transparent: xRayEnabled,    // solid
         depthTest: false,      // <- always draw on top so it's visible from anywhere
         depthWrite: false,
     })
     );
-    hiMesh.position.set(rand(), rand(), rand());
+    hiMesh.position.set(oresOfInterest[j][0], oresOfInterest[j][1], oresOfInterest[j][2]);
     hiMesh.renderOrder = 9999; // extra insurance to render last
     scene.add(hiMesh);
+    hiCubesRef.current.push(hiMesh);
+
 }
 
 
@@ -134,7 +148,6 @@ window.addEventListener("keyup", handleKeyUp);
     ro.observe(mountRef.current);
     setSizeToContainer(); // initial
 
-
     // Animation loop
     const animate = () => {
       requestAnimationFrame(animate);
@@ -157,7 +170,7 @@ if (keys["d"]) camera.translateX(speed);
     // Handle resize
     const handleResize = () => {
       if (!mountRef.current) return;
-      camera.aspect = mountRef.current.clientWidth / mountRef.current.clientHeight;
+    //   camera.aspewct = mountRef.current.clientWidth / mountRef.current.clientHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(mountRef.current.clientWidth, mountRef.current.clientHeight);
     };
@@ -174,7 +187,7 @@ if (keys["d"]) camera.translateX(speed);
       mountRef.current?.removeChild(renderer.domElement);
       window.removeEventListener("keydown", handleKeyDown);
 window.removeEventListener("keyup", handleKeyUp);
-
+hiCubesRef.current = [];
     };
   }, []);
 
@@ -198,6 +211,17 @@ window.removeEventListener("keyup", handleKeyUp);
     mesh.geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
   }
 }, [time]);
+
+useEffect(() => {
+  for (const mesh of hiCubesRef.current) {
+    const mat = mesh.material as THREE.MeshBasicMaterial;
+
+    mat.transparent = xRayEnabled;
+
+    mat.needsUpdate = true;
+  }
+}, [xRayEnabled]);
+
 
   return <div ref={mountRef} style={{ width: "100%", height: "100%" }} />;
 }

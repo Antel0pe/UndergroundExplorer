@@ -6,6 +6,10 @@ import SceneCard from "./components/SceneCard";
 
 export default function Home() {
   const [sceneIds, setSceneIds] = useState<number[]>([0]); // start with one
+  // add below: const [sceneIds, setSceneIds] = useState<number[]>([0]);
+const [xRayEnabled, setXRayEnabled] = useState(true);
+const toggleXRay = () => setXRayEnabled(v => !v);
+
 
   const addScene = () => {
     setSceneIds((prev) => [...prev, (prev[prev.length - 1] ?? 0) + 1]);
@@ -24,14 +28,18 @@ export default function Home() {
           boxSizing: "border-box",
         }}
       >
-        {sceneIds.map((id) => (
-          <SceneCard key={id} />
-        ))}
+{/* pass xRayEnabled to each SceneCard */}
+{sceneIds.map((id) => (
+  <SceneCard key={id} xRayEnabled={xRayEnabled} />
+))}
+
       </div>
 
       {/* Sidebar (15%) */}
       <div style={{ flex: "0 0 15%", background: "#f0f0f0" }}>
-        <Sidebar onAddScene={addScene} />
+        {/* pass toggle + current state to Sidebar */}
+<Sidebar onAddScene={addScene} xRayEnabled={xRayEnabled} onToggleXRay={toggleXRay} />
+
       </div>
     </div>
   );
