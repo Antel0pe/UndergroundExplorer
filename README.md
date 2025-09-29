@@ -41,8 +41,8 @@ Things to do:
     - have graphs and stuff that show up
 - make look pretty and actually like cave?
 - highlight differences
-- show confidence overlay
-- density/threshold slider. as you slide different objects pop up/disappear. 
 
 Done
 - add xray button to sidebar that shows normal cave vs xray mode
+- show confidence overlay
+- density/threshold slider. as you slide different objects pop up/disappear. 

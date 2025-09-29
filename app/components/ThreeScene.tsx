@@ -50,6 +50,10 @@ export default function ThreeScene({
     renderer.setSize(mountRef.current.clientWidth, mountRef.current.clientHeight);
     mountRef.current.appendChild(renderer.domElement);
 
+    const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+
+
     // Cube
 for (let i = 0; i < 20; i++) {
   const sliceThickness = 1 / 20;
@@ -184,6 +188,9 @@ if (keys["s"]) camera.translateZ(speed);
 // Left/right
 if (keys["a"]) camera.translateX(-speed);
 if (keys["d"]) camera.translateX(speed);
+
+if (keys["shift"]) camera.translateY(-speed);
+if (keys[" "]) camera.translateY(speed);
       renderer.render(scene, camera);
     };
     animate();
@@ -198,6 +205,32 @@ if (keys["d"]) camera.translateX(speed);
     window.addEventListener("resize", handleResize);
 
 
+// after you create the renderer:
+const canvas = renderer.domElement;
+
+// helper: convert a pointer event on the canvas → NDC
+function getMouseNDC(e: MouseEvent | PointerEvent) {
+  const rect = canvas.getBoundingClientRect();
+  const x = ( (e.clientX - rect.left) / rect.width ) * 2 - 1;
+  const y = -( (e.clientY - rect.top)  / rect.height) * 2 + 1;
+  return { x, y };
+}
+
+// listen on the canvas, not window
+canvas.addEventListener("click", (e) => {
+  const { x, y } = getMouseNDC(e);
+  mouse.set(x, y);
+
+  // ensure matrices are current if you moved the camera this frame
+  camera.updateMatrixWorld();
+  raycaster.setFromCamera(mouse, camera);
+
+  const hits = raycaster.intersectObjects(hiCubesRef.current, true);
+  if (hits.length) {
+    const hit = hits[0].object as THREE.Mesh;
+    (hit.material as THREE.MeshBasicMaterial).color.set(0xff0000);
+  }
+});
 
     
 
