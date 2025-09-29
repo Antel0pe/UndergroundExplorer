@@ -36,13 +36,13 @@ The easiest way to deploy your Next.js app is to use the [Vercel Platform](https
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
 
 Things to do:
-- add camera looking around. with shift + space
-- enable clicking things of interest
-    - have graphs and stuff that show up
 - make look pretty and actually like cave?
 - highlight differences
 
 Done
+- enable clicking things of interest
+    - have graphs and stuff that show up
+- add camera looking around. with shift + space
 - add xray button to sidebar that shows normal cave vs xray mode
 - show confidence overlay
 - density/threshold slider. as you slide different objects pop up/disappear. 

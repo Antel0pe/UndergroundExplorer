@@ -18,8 +18,15 @@ export default function ThreeScene({
   xRayEnabled,
   density,
   confidence,
-}: { time: number; xRayEnabled: boolean; density: number; confidence: number }) {
-  const mountRef = useRef<HTMLDivElement>(null);
+  setShowChart,               // ← add
+}: {
+  time: number;
+  xRayEnabled: boolean;
+  density: number;
+  confidence: number;
+  setShowChart: React.Dispatch<React.SetStateAction<boolean>>;
+}) {
+      const mountRef = useRef<HTMLDivElement>(null);
   const slicesRef = useRef<THREE.Mesh[]>([]);
   const hiCubesRef = useRef<THREE.Mesh[]>([]);
 
@@ -229,6 +236,7 @@ canvas.addEventListener("click", (e) => {
   if (hits.length) {
     const hit = hits[0].object as THREE.Mesh;
     (hit.material as THREE.MeshBasicMaterial).color.set(0xff0000);
+    setShowChart(true); 
   }
 });
 
