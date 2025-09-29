@@ -98,6 +98,21 @@ const handleKeyUp = (e: KeyboardEvent) => {
 window.addEventListener("keydown", handleKeyDown);
 window.addEventListener("keyup", handleKeyUp);
 
+    // Size to container (single source of truth)
+    const setSizeToContainer = () => {
+      if (!mountRef.current) return;
+      const { width, height } = mountRef.current.getBoundingClientRect();
+      const w = Math.max(1, Math.floor(width));
+      const h = Math.max(1, Math.floor(height));
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      console.log('setting size')
+      renderer.setSize(w, h, true);
+    };
+    const ro = new ResizeObserver(setSizeToContainer);
+    ro.observe(mountRef.current);
+    setSizeToContainer(); // initial
+
 
     // Animation loop
     const animate = () => {
@@ -165,3 +180,5 @@ window.removeEventListener("keyup", handleKeyUp);
 
   return <div ref={mountRef} style={{ width: "100%", height: "100%" }} />;
 }
+
+
