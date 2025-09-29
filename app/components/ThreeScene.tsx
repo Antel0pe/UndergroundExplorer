@@ -3,11 +3,17 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 
-export default function ThreeScene() {
+export default function ThreeScene({ time }: { time: number }) {
+
   const mountRef = useRef<HTMLDivElement>(null);
+  const slicesRef = useRef<THREE.Mesh[]>([]);
 
   useEffect(() => {
     if (!mountRef.current) return;
+
+    while (mountRef.current.firstChild) {
+      mountRef.current.removeChild(mountRef.current.firstChild);
+    }
 
     // Scene
     const scene = new THREE.Scene();
@@ -37,12 +43,33 @@ for (let i = 0; i < 20; i++) {
   // Color like before
   const colors: number[] = [];
   const pos = geo.attributes.position;
-  for (let j = 0; j < pos.count; j++) {
-    const x = pos.getX(j);
-    const y = pos.getY(j);
-    const z = pos.getZ(j);
-    colors.push((x + 0.5), (y + 0.5), (z + 0.5));
-  }
+// normalize time 0..100 → 0..1
+const tNorm = time / 100;
+
+// Color like before, but flip gradually
+for (let j = 0; j < pos.count; j++) {
+  const x = pos.getX(j);
+  const y = pos.getY(j);
+  const z = pos.getZ(j);
+
+  // normal 0..1
+  const rx = (x + 0.5);
+  const gx = (y + 0.5);
+  const bx = (z + 0.5);
+
+  // flipped versions
+  const rxFlip = 1 - rx;
+  const gxFlip = 1 - gx;
+  const bxFlip = 1 - bx;
+
+  // interpolate between normal and flipped
+  const r = rx * (1 - tNorm) + rxFlip * tNorm;
+  const g = gx * (1 - tNorm) + gxFlip * tNorm;
+  const b = bx * (1 - tNorm) + bxFlip * tNorm;
+
+  colors.push(r, g, b);
+}
+
   geo.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
 
   const mat = new THREE.MeshBasicMaterial({
@@ -51,8 +78,10 @@ for (let i = 0; i < 20; i++) {
     opacity: 0.6,
     side: THREE.DoubleSide
   });
+const mesh = new THREE.Mesh(geo, mat);
+slicesRef.current.push(mesh);
+scene.add(mesh);
 
-  scene.add(new THREE.Mesh(geo, mat));
 }
 
 
@@ -100,6 +129,8 @@ if (keys["d"]) camera.translateX(speed);
 
 
 
+    
+
 
 
     return () => {
@@ -111,5 +142,26 @@ window.removeEventListener("keyup", handleKeyUp);
     };
   }, []);
 
-  return <div ref={mountRef} style={{ width: "100%", height: "100vh" }} />;
+  useEffect(() => {
+  const tNorm = time / 100;
+  for (const mesh of slicesRef.current) {
+    const pos = mesh.geometry.attributes.position as THREE.BufferAttribute;
+    const colors: number[] = [];
+    for (let j = 0; j < pos.count; j++) {
+      const x = pos.getX(j);
+      const y = pos.getY(j);
+      const z = pos.getZ(j);
+      const rx = (x + 0.5);
+      const gx = (y + 0.5);
+      const bx = (z + 0.5);
+      const r = rx * (1 - tNorm) + (1 - rx) * tNorm;
+      const g = gx * (1 - tNorm) + (1 - gx) * tNorm;
+      const b = bx * (1 - tNorm) + (1 - bx) * tNorm;
+      colors.push(r, g, b);
+    }
+    mesh.geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
+  }
+}, [time]);
+
+  return <div ref={mountRef} style={{ width: "100%", height: "100%" }} />;
 }
