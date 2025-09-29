@@ -76,12 +76,33 @@ for (let j = 0; j < pos.count; j++) {
     vertexColors: true,
     transparent: true,
     opacity: 0.6,
-    side: THREE.DoubleSide
+    side: THREE.DoubleSide,
+    depthWrite: false,
   });
 const mesh = new THREE.Mesh(geo, mat);
 slicesRef.current.push(mesh);
 scene.add(mesh);
 
+}
+for (let j = 0; j < 5; j++) {
+    // === ADD: highlight cube inside the big cube ===
+    const hiSize = 0.1; // small cube
+    const hiGeo = new THREE.BoxGeometry(hiSize, hiSize, hiSize);
+
+    // random position inside [-0.45, 0.45] so it stays well within the big cube
+    const rand = () => (Math.random() - 0.5) * 0.9;
+    const hiMesh = new THREE.Mesh(
+    hiGeo,
+    new THREE.MeshBasicMaterial({
+        color: 0xffff00,       // yellow
+        transparent: true,    // solid
+        depthTest: false,      // <- always draw on top so it's visible from anywhere
+        depthWrite: false,
+    })
+    );
+    hiMesh.position.set(rand(), rand(), rand());
+    hiMesh.renderOrder = 9999; // extra insurance to render last
+    scene.add(hiMesh);
 }
 
 
