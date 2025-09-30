@@ -11,7 +11,7 @@ export default function SceneCard({
   confidence,
 }: { xRayEnabled: boolean; density: number; confidence: number }) {
   const [time, setTime] = useState(0);
-  const [showChart, setShowChart] = useState(true);
+  const [showChart, setShowChart] = useState(false);
 
   return (
     <div

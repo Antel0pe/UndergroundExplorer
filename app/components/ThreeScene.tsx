@@ -113,13 +113,7 @@ slicesRef.current.push(mesh);
 scene.add(mesh);
 
 }
-let oresOfInterest: number[][] = [
-  [ 0.3,  0.43,   0.10, 0.1, 0.3, 0.8],
-  [ -0.20,  -0.2,  0.09, 0.13, 0.7, 0.1 ],
-  [ -0.33,   0.38,    0.23, 0.05, 0.4, 0.5 ],
-  [ 0.2,  0.21,   0.40, 0.12, 0.9, 0.4 ],
-  [  0.11, -0.27, -0.20, 0.09, 0.2, 0.8 ]
-];
+
 hiCubesRef.current = []; // reset any previous refs (defensive)
 
 for (let j = 0; j < ORES.length; j++) {
@@ -155,12 +149,23 @@ for (let j = 0; j < ORES.length; j++) {
     // Track which keys are pressed
 const keys: Record<string, boolean> = {};
 
-const handleKeyDown = (e: KeyboardEvent) => {
-  keys[e.key.toLowerCase()] = true;
-};
-const handleKeyUp = (e: KeyboardEvent) => {
-  keys[e.key.toLowerCase()] = false;
-};
+    mountRef.current.tabIndex = 0;
+
+    // Key handlers scoped to the canvas container
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const k = e.key.toLowerCase();
+      if (k === "w" || k === "a" || k === "s" || k === "d" || k === " " || k === "shift") {
+        e.preventDefault(); // stop page scroll / button activation
+        keys[k] = true;
+      }
+    };
+    const handleKeyUp = (e: KeyboardEvent) => {
+      const k = e.key.toLowerCase();
+      if (k === "w" || k === "a" || k === "s" || k === "d" || k === " " || k === "shift") {
+        e.preventDefault();
+        keys[k] = false;
+      }
+    };
 
 window.addEventListener("keydown", handleKeyDown);
 window.addEventListener("keyup", handleKeyUp);
@@ -198,7 +203,10 @@ if (keys["d"]) camera.translateX(speed);
 
 if (keys["shift"]) camera.translateY(-speed);
 if (keys[" "]) camera.translateY(speed);
+
       renderer.render(scene, camera);
+
+
     };
     animate();
 
