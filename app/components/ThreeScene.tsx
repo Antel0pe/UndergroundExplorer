@@ -12,23 +12,31 @@ const ORES: Array<[number, number, number, number, number, number]> = [
   [ 0.11, -0.27, -0.20, 0.09, 0.2, 0.8 ],
 ];
 
+// Move left by 0.01 per unit time (t in 0..100)
+const MOVE_PER_T = 0.01;
+
+
 
 export default function ThreeScene({
   time,
   xRayEnabled,
   density,
   confidence,
-  setShowChart,               // ← add
+  setShowChart,
+  extraTime,
 }: {
   time: number;
   xRayEnabled: boolean;
   density: number;
   confidence: number;
   setShowChart: React.Dispatch<React.SetStateAction<boolean>>;
+  extraTime: number;
 }) {
       const mountRef = useRef<HTMLDivElement>(null);
   const slicesRef = useRef<THREE.Mesh[]>([]);
   const hiCubesRef = useRef<THREE.Mesh[]>([]);
+const deltaCubesRef = useRef<THREE.Mesh[]>([]);
+const depthPrepassRef = useRef<THREE.Mesh[]>([]);
 
 
   useEffect(() => {
@@ -39,6 +47,9 @@ export default function ThreeScene({
     }
 
     hiCubesRef.current = []; // reset on (re)build
+    deltaCubesRef.current = [];
+depthPrepassRef.current = [];
+
 
     // Scene
     const scene = new THREE.Scene();
@@ -129,9 +140,13 @@ for (let j = 0; j < ORES.length; j++) {
 
   const hiMesh = new THREE.Mesh(hiGeo, hiMat);
   hiMesh.position.set(x, y, z);
+  
   hiMesh.renderOrder = 9999;
-
+  
   // stash metadata for fast threshold checks later
+  hiMesh.userData.baseX = x; 
+  hiMesh.userData.baseY = y; 
+  hiMesh.userData.baseZ = z; 
   hiMesh.userData.density = dens;     // 0..1
   hiMesh.userData.confidence = conf;  // 0..1
 
@@ -142,7 +157,27 @@ for (let j = 0; j < ORES.length; j++) {
 
   scene.add(hiMesh);
   hiCubesRef.current.push(hiMesh);
+
+  const deltaMat = new THREE.MeshBasicMaterial({
+  color: 0xff0000,
+  transparent: true,
+  opacity: 0.65,           // softened; we’ll tweak with xRay below
+  depthTest: true,
+  depthWrite: false,
+});
+const deltaMesh = new THREE.Mesh(hiGeo, deltaMat);
+deltaMesh.position.set(x, y, z);
+deltaMesh.visible = false;           // toggled in effect
+deltaMesh.renderOrder = 200;         // after depth prepass
+scene.add(deltaMesh);
+deltaCubesRef.current.push(deltaMesh);
+
+// keep the main visible pass last
+hiMesh.renderOrder = 300;
+
 }
+
+
 
 
 
@@ -280,7 +315,30 @@ hiCubesRef.current = [];
     }
     mesh.geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
   }
-}, [time]);
+
+  const dx1 = time * MOVE_PER_T;        // current
+  const dx2 = extraTime * MOVE_PER_T;   // comparison
+
+  for (let i = 0; i < hiCubesRef.current.length; i++) {
+    const main  = hiCubesRef.current[i];
+    const delta = deltaCubesRef.current[i];
+    // const depth = depthPrepassRef.current[i];
+
+    const baseX = typeof main.userData.baseX === "number" ? main.userData.baseX : main.position.x;
+
+    // positions
+    main.position.x  = baseX - dx1;   // yellow @ time
+    // depth.position.x = main.position.x; // depth prepass tracks yellow
+    if (delta) delta.position.x = baseX - dx2; // red @ extraTime
+
+    // show delta only if it's a *different* time and main is visible
+    if (delta && extraTime !== 0 && xRayEnabled) {
+      delta.visible = extraTime !== time && main.visible;
+      (delta.material as THREE.MeshBasicMaterial).opacity = xRayEnabled ? 0.5 : 0.65;
+    }
+  }
+
+}, [time, extraTime, xRayEnabled]);
 
 // useEffect(() => {
 //   for (const mesh of hiCubesRef.current) {

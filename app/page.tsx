@@ -10,6 +10,10 @@ export default function Home() {
 const [xRayEnabled, setXRayEnabled] = useState(true);
 const [density, setDensity] = useState(0);
 const [confidence, setConfidence] = useState(0);
+// Home.tsx (top-level state block)
+const [addExtraSlider, setAddExtraSlider] = useState(false);
+const handleAddTimeSliders = () => setAddExtraSlider(true);
+
 
 // simple clamp
 const clamp01 = (v: number) => Math.max(0, Math.min(100, Math.round(v)));
@@ -44,8 +48,10 @@ const toggleXRay = () => setXRayEnabled(v => !v);
     xRayEnabled={xRayEnabled}
     density={density}
     confidence={confidence}
+    showExtraTimeSlider={addExtraSlider}   
   />
 ))}
+
 
 
       </div>
@@ -61,7 +67,9 @@ const toggleXRay = () => setXRayEnabled(v => !v);
   confidence={confidence}
   onChangeDensity={handleDensity}
   onChangeConfidence={handleConfidence}
+  onAddTimeSliders={handleAddTimeSliders}   
 />
+
 
       </div>
     </div>

@@ -9,9 +9,17 @@ export default function SceneCard({
   xRayEnabled,
   density,
   confidence,
-}: { xRayEnabled: boolean; density: number; confidence: number }) {
-  const [time, setTime] = useState(0);
-  const [showChart, setShowChart] = useState(false);
+  showExtraTimeSlider,            // <-- add this
+}: { 
+  xRayEnabled: boolean; 
+  density: number; 
+  confidence: number; 
+  showExtraTimeSlider?: boolean;  // <-- add this
+}) {
+
+const [time, setTime] = useState(0);
+const [showChart, setShowChart] = useState(false);
+const [extraTime, setExtraTime] = useState(0); // <-- add this
 
   return (
     <div
@@ -32,7 +40,8 @@ export default function SceneCard({
           xRayEnabled={xRayEnabled}
           density={density}
           confidence={confidence}
-          setShowChart={setShowChart}   
+          setShowChart={setShowChart}  
+          extraTime={extraTime} 
         />
 
         {/* Chart overlay (top-right) — only shows if true */}
@@ -53,18 +62,28 @@ export default function SceneCard({
       </div>
 
       {/* Local slider */}
-      <div
-        style={{
-          padding: "10px 12px",
-          borderTop: "1px solid #ececee",
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-        }}
-      >
-        <TimeSlider value={time} onChange={setTime} />
-        <div style={{ width: 64, textAlign: "right" }}>t = {time}</div>
-      </div>
+<div
+  style={{
+    padding: "10px 12px",
+    borderTop: "1px solid #ececee",
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    flexWrap: "wrap",
+  }}
+>
+  <TimeSlider value={time} onChange={setTime} />
+  <div style={{ width: 64, textAlign: "right" }}>t = {time}</div>
+
+  {showExtraTimeSlider && (
+    <>
+      <div style={{ width: 1, height: 24, background: "#e5e7eb" }} />
+      <TimeSlider value={extraTime} onChange={setExtraTime} />
+      <div style={{ width: 64, textAlign: "right" }}>t2 = {extraTime}</div>
+    </>
+  )}
+</div>
+
     </div>
   );
 }

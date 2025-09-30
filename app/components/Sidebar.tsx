@@ -4,11 +4,11 @@ type Props = {
   onAddScene: () => void;
   xRayEnabled: boolean;
   onToggleXRay: () => void;
-
   density: number;
   confidence: number;
   onChangeDensity: (v: number) => void;
   onChangeConfidence: (v: number) => void;
+  onAddTimeSliders: () => void;   // <-- add this
 };
 
 export default function Sidebar({
@@ -19,6 +19,7 @@ export default function Sidebar({
   confidence,
   onChangeDensity,
   onChangeConfidence,
+  onAddTimeSliders
 }: Props) {
 
   return (
@@ -48,12 +49,27 @@ export default function Sidebar({
 </button>
 
 <button
-  onClick={onAddScene}
+  onClick={onAddTimeSliders}
   style={{
     padding: "8px 12px",
     borderRadius: 6,
     border: "1px solid #d4d4d8",
     background: "#fff",
+    cursor: "pointer",
+    marginLeft: 8,
+    backgroundColor: "#111827"
+  }}
+>
+  Add Time Sliders
+</button>
+
+<button
+  onClick={onAddScene}
+  style={{
+    padding: "8px 12px",
+    borderRadius: 6,
+    border: "1px solid #d4d4d8",
+    background: "#111827",
     cursor: "pointer",
   }}
 >
@@ -113,6 +129,8 @@ export default function Sidebar({
     />
   </label>
 </div>
+
+
 
 
     </div>
