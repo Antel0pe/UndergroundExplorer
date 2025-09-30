@@ -403,7 +403,7 @@ useEffect(() => {
     // keep delta (red) visibility tied to main + time compare + xray
     const delta = deltaCubesRef.current[i];
     if (delta) {
-      delta.visible = passes && xRayEnabled && (extraTime !== time);
+      delta.visible = passes && xRayEnabled && (extraTime !== 0);
       (delta.material as THREE.MeshBasicMaterial).opacity = xRayEnabled ? 0.5 : 0.65;
     }
 
