@@ -13,7 +13,7 @@ const ORES: Array<[number, number, number, number, number, number]> = [
 ];
 
 // Move left by 0.01 per unit time (t in 0..100)
-const MOVE_PER_T = 0.01;
+const MOVE_PER_T = 0.005;
 
 
 
@@ -72,43 +72,77 @@ depthPrepassRef.current = [];
 const mouse = new THREE.Vector2();
 
 
-    // Cube
+    // --- helper: simple coherent noise field (no flicker slice-to-slice)
+function hash(n: number) {
+  return (Math.sin(n) * 43758.5453123) % 1;
+}
+function noise3(x: number, y: number, z: number) {
+  const xi = Math.floor(x), yi = Math.floor(y), zi = Math.floor(z);
+  const xf = x - xi, yf = y - yi, zf = z - zi;
+  const sx = xf * xf * (3 - 2 * xf);
+  const sy = yf * yf * (3 - 2 * yf);
+  const sz = zf * zf * (3 - 2 * zf);
+  const h = (X: number, Y: number, Z: number) => hash(X * 157 + Y * 113 + Z * 71);
+  const c000 = h(xi, yi, zi);
+  const c100 = h(xi+1, yi, zi);
+  const c010 = h(xi, yi+1, zi);
+  const c110 = h(xi+1, yi+1, zi);
+  const c001 = h(xi, yi, zi+1);
+  const c101 = h(xi+1, yi, zi+1);
+  const c011 = h(xi, yi+1, zi+1);
+  const c111 = h(xi+1, yi+1, zi+1);
+  const ix00 = c000 * (1 - sx) + c100 * sx;
+  const ix10 = c010 * (1 - sx) + c110 * sx;
+  const ix01 = c001 * (1 - sx) + c101 * sx;
+  const ix11 = c011 * (1 - sx) + c111 * sx;
+  const iy0 = ix00 * (1 - sy) + ix10 * sy;
+  const iy1 = ix01 * (1 - sy) + ix11 * sy;
+  return iy0 * (1 - sz) + iy1 * sz;
+}
 for (let i = 0; i < 20; i++) {
   const sliceThickness = 1 / 20;
-  const geo = new THREE.BoxGeometry(1, 1, sliceThickness);
+  // instead of 1x1xsliceThickness
+const geo = new THREE.BoxGeometry(1, 1, sliceThickness, 10, 10, 1);
 
-  // Move slice along Z
   geo.translate(0, 0, -0.5 + i * sliceThickness);
 
-  // Color like before
   const colors: number[] = [];
-  const pos = geo.attributes.position;
-// normalize time 0..100 → 0..1
-const tNorm = time / 100;
+  const pos = geo.attributes.position as THREE.BufferAttribute;
 
-// Color like before, but flip gradually
+  if (i === 0) {
+    // --- FRONT SLICE: noisy rock face ---
 for (let j = 0; j < pos.count; j++) {
   const x = pos.getX(j);
   const y = pos.getY(j);
   const z = pos.getZ(j);
 
-  // normal 0..1
-  const rx = (x + 0.5);
-  const gx = (y + 0.5);
-  const bx = (z + 0.5);
+let n1 = noise3(x * 2000, y * 2000, z * 2000);
+let n2 = noise3(x * 8000, y * 8000, z * 8000);
 
-  // flipped versions
-  const rxFlip = 1 - rx;
-  const gxFlip = 1 - gx;
-  const bxFlip = 1 - bx;
+let n = 0.6 * n1 + 0.4 * n2; // fine + medium detail
+n = Math.pow(n, 1.3);
 
-  // interpolate between normal and flipped
-  const r = rx * (1 - tNorm) + rxFlip * tNorm;
-  const g = gx * (1 - tNorm) + gxFlip * tNorm;
-  const b = bx * (1 - tNorm) + bxFlip * tNorm;
+const r = 0.2 + 0.6 * n;
+const g = 0.15 + 0.5 * n;
+const b = 0.1 + 0.4 * n;
+
+
 
   colors.push(r, g, b);
 }
+
+  } else {
+    // --- INNER SLICES: flat brown/grey shading by depth ---
+    // darken slightly as depth increases
+    const depthFactor = 0.8 - i * 0.02; // goes from ~0.8 → 0.4
+    const r = 0.25 * depthFactor;
+    const g = 0.22 * depthFactor;
+    const b = 0.2  * depthFactor;
+
+    for (let j = 0; j < pos.count; j++) {
+      colors.push(r, g, b);
+    }
+  }
 
   geo.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
 
@@ -119,11 +153,13 @@ for (let j = 0; j < pos.count; j++) {
     side: THREE.DoubleSide,
     depthWrite: false,
   });
-const mesh = new THREE.Mesh(geo, mat);
-slicesRef.current.push(mesh);
-scene.add(mesh);
-
+  const mesh = new THREE.Mesh(geo, mat);
+  slicesRef.current.push(mesh);
+  scene.add(mesh);
 }
+
+
+
 
 hiCubesRef.current = []; // reset any previous refs (defensive)
 
@@ -297,24 +333,24 @@ hiCubesRef.current = [];
   }, []);
 
   useEffect(() => {
-  const tNorm = time / 100;
-  for (const mesh of slicesRef.current) {
-    const pos = mesh.geometry.attributes.position as THREE.BufferAttribute;
-    const colors: number[] = [];
-    for (let j = 0; j < pos.count; j++) {
-      const x = pos.getX(j);
-      const y = pos.getY(j);
-      const z = pos.getZ(j);
-      const rx = (x + 0.5);
-      const gx = (y + 0.5);
-      const bx = (z + 0.5);
-      const r = rx * (1 - tNorm) + (1 - rx) * tNorm;
-      const g = gx * (1 - tNorm) + (1 - gx) * tNorm;
-      const b = bx * (1 - tNorm) + (1 - bx) * tNorm;
-      colors.push(r, g, b);
-    }
-    mesh.geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
-  }
+  // const tNorm = time / 100;
+  // for (const mesh of slicesRef.current) {
+  //   const pos = mesh.geometry.attributes.position as THREE.BufferAttribute;
+  //   const colors: number[] = [];
+  //   for (let j = 0; j < pos.count; j++) {
+  //     const x = pos.getX(j);
+  //     const y = pos.getY(j);
+  //     const z = pos.getZ(j);
+  //     const rx = (x + 0.5);
+  //     const gx = (y + 0.5);
+  //     const bx = (z + 0.5);
+  //     const r = rx * (1 - tNorm) + (1 - rx) * tNorm;
+  //     const g = gx * (1 - tNorm) + (1 - gx) * tNorm;
+  //     const b = bx * (1 - tNorm) + (1 - bx) * tNorm;
+  //     colors.push(r, g, b);
+  //   }
+  //   mesh.geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
+  // }
 
   const dx1 = time * MOVE_PER_T;        // current
   const dx2 = extraTime * MOVE_PER_T;   // comparison
@@ -350,22 +386,34 @@ hiCubesRef.current = [];
 //   }
 // }, [xRayEnabled]);
 
+// REPLACE your thresholds effect with this
 useEffect(() => {
   const dThresh = density / 100;
   const cThresh = confidence / 100;
 
-  for (const mesh of hiCubesRef.current) {
+  for (let i = 0; i < hiCubesRef.current.length; i++) {
+    const main = hiCubesRef.current[i];
+    const dens = main.userData.density as number;     // 0..1
+    const conf = main.userData.confidence as number;  // 0..1
+
     // visibility by thresholds
-    const dens = mesh.userData.density as number;     // 0..1
-    const conf = mesh.userData.confidence as number;  // 0..1
-    mesh.visible = dens >= dThresh && conf >= cThresh;
+    const passes = dens >= dThresh && conf >= cThresh;
+    main.visible = passes;
+
+    // keep delta (red) visibility tied to main + time compare + xray
+    const delta = deltaCubesRef.current[i];
+    if (delta) {
+      delta.visible = passes && xRayEnabled && (extraTime !== time);
+      (delta.material as THREE.MeshBasicMaterial).opacity = xRayEnabled ? 0.5 : 0.65;
+    }
 
     // match the X-Ray / Underground look
-    const mat = mesh.material as THREE.MeshBasicMaterial;
+    const mat = main.material as THREE.MeshBasicMaterial;
     mat.transparent = xRayEnabled;
     mat.needsUpdate = true;
   }
-}, [density, confidence, xRayEnabled]);
+}, [density, confidence, xRayEnabled, time, extraTime]);
+
 
 
 

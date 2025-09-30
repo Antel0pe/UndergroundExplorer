@@ -1,5 +1,16 @@
 "use client";
 
+const keyStyle: React.CSSProperties = {
+  border: "1px solid #d4d4d8",
+  borderRadius: 4,
+  padding: "4px 8px",
+  textAlign: "center",
+  background: "#f9fafb",
+  fontSize: 12,
+  fontWeight: 500,
+};
+
+
 type Props = {
   onAddScene: () => void;
   xRayEnabled: boolean;
@@ -33,6 +44,48 @@ export default function Sidebar({
       }}
     >
       <div style={{ fontWeight: 600 }}>Sidebar</div>
+<div
+  style={{
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "flex-start",
+    marginTop: 12,
+    gap: 24, // space between WASD and Shift/Space
+    fontSize: 12,
+    color: "#374151",
+  }}
+>
+
+    {/* Instruction text */}
+  <div style={{ fontWeight: 500, color: "#111827" }}>
+    Click on the ores (yellow boxes)
+  </div>
+  {/* WASD cluster */}
+  <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+    <div style={{ display: "flex", justifyContent: "center", gap: 4 }}>
+      <div style={keyStyle}>W</div>
+    </div>
+    <div style={{ display: "flex", justifyContent: "center", gap: 4 }}>
+      <div style={keyStyle}>A</div>
+      <div style={keyStyle}>S</div>
+      <div style={keyStyle}>D</div>
+    </div>
+    <div style={{ marginTop: 4 }}>Move</div>
+  </div>
+
+  {/* Shift + Space cluster */}
+  <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+    <div style={{ display: "flex", gap: 6 }}>
+      <div style={{ ...keyStyle, width: 50 }}>Shift</div>
+      <div style={{ ...keyStyle, width: 60 }}>Space</div>
+    </div>
+    <div style={{ display: "flex", justifyContent: "center", gap: 28, marginTop: 4 }}>
+      <span>Down</span>
+      <span>Up</span>
+    </div>
+  </div>
+</div>
+
       <button
   onClick={onToggleXRay}
   style={{
@@ -60,10 +113,10 @@ export default function Sidebar({
     backgroundColor: "#111827"
   }}
 >
-  Add Time Sliders
+  Temporal Comparison
 </button>
 
-<button
+{/* <button
   onClick={onAddScene}
   style={{
     padding: "8px 12px",
@@ -74,12 +127,13 @@ export default function Sidebar({
   }}
 >
   Add Scene
-</button>
+</button> */}
+
 
 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
   {/* Density */}
   <label style={{ display: "flex", alignItems: "center", gap: 6 }}>
-    <span style={{ fontSize: 12, color: "#374151" }}>Density</span>
+    <span style={{ fontSize: 12, color: "#374151" }}>Density Threshold</span>
     <input
       type="number"
       min={0}
@@ -105,7 +159,7 @@ export default function Sidebar({
 
   {/* Confidence */}
   <label style={{ display: "flex", alignItems: "center", gap: 6 }}>
-    <span style={{ fontSize: 12, color: "#374151" }}>Confidence</span>
+    <span style={{ fontSize: 12, color: "#374151" }}>Confidence Threshold</span>
     <input
       type="number"
       min={0}

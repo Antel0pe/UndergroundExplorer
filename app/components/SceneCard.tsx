@@ -73,13 +73,13 @@ const [extraTime, setExtraTime] = useState(0); // <-- add this
   }}
 >
   <TimeSlider value={time} onChange={setTime} />
-  <div style={{ width: 64, textAlign: "right" }}>t = {time}</div>
+  <div style={{ width: 64, textAlign: "right", color: "black" }}>t = {time}</div>
 
   {showExtraTimeSlider && (
     <>
       <div style={{ width: 1, height: 24, background: "#e5e7eb" }} />
       <TimeSlider value={extraTime} onChange={setExtraTime} />
-      <div style={{ width: 64, textAlign: "right" }}>t2 = {extraTime}</div>
+      <div style={{ width: 64, textAlign: "right", color: "black" }}>t2 = {extraTime}</div>
     </>
   )}
 </div>
